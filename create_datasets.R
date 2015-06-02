@@ -56,5 +56,5 @@ med_cond_ques_lab <- load_nhanes("mcq", 2003, lab = TRUE) %>% setDT
 # example:  load many files
 listing <- c("mcq", "dex", "hcq", "hiq", "vix", "uc") # demo is assumed
 full <- load_merge(listing, 2003) # open all datasets and merge together by SEQN
-full_labs <- load_labs_merge(listing, 2003) %>% setkey(., name, label) # open all label datasets and stack them (SEQN repeated for each dataset)
+full_labs <- load_labs_merge(listing, 2003) # open all label datasets and stack them (SEQN repeated for each dataset)
 
