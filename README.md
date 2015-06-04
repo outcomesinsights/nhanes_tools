@@ -14,6 +14,7 @@ The process also saves a file that lists all the files in the FTP directory.  Th
 ## Other Resources  
 There are some excellent resources for downloading and using NHANES data.  
 
-1. Anthony Damico has a very comprehensive site on working with many public use datasets including NHANES at http://www.asdfree.com
+1. Anthony Damico has a very comprehensive site on working with many public use datasets including NHANES at http://www.asdfree.com  
+2. The NHANES site itself contains R code as well.  http://www.cdc.gov/nchs/tutorials/Nhanes/Downloads/intro.htm  
+3. There are other NHANES repositories if you use GitHub's search function on "nhanes".  One that seems very good is here:  https://github.com/cjendres1/nhanes  
 
-1. The NHANES site itself contains R code as well.  http://www.cdc.gov/nchs/tutorials/Nhanes/Downloads/intro.htm
