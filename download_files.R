@@ -64,11 +64,13 @@ read_save <- function(ftp_url, setup) {
 # Get entire NHANES directory and read into subdirectory as .rds objects
 # note:  seems to work better doing this one wave at a time (no loop)
 waves <- seq(1999, 2011, 2) # for looping.  2013-2014 is not available yet 
-for(wave in waves){ 
+for(wave in waves){
+    cat("Starting wave: ", wave, "\n")
     n <- setup_nhanes(data_dir = "./data/raw/", yr = wave)
     filenames <- get_filenames(n)
     for(file in filenames){
         read_save(file, n)
+        cat("Saved file: ", file, "\n")
     }
 }
 
