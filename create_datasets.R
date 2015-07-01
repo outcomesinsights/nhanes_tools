@@ -46,15 +46,15 @@ load_labs_merge <- function(list_of_files, yr){
     return(rbindlist(dt))
 }
 
-# example:  load single files
-demographics <- load_nhanes("demo", 2003)
-med_cond_ques <- load_nhanes("mcq", 2003)
+## example:  load single files
+# demographics <- load_nhanes("demo", 2003)
+# med_cond_ques <- load_nhanes("mcq", 2003)
 
-demographics_lab <- load_nhanes("demo", 2003, lab = TRUE) %>% setDT
-med_cond_ques_lab <- load_nhanes("mcq", 2003, lab = TRUE) %>% setDT
+# demographics_lab <- load_nhanes("demo", 2003, lab = TRUE) %>% setDT
+# med_cond_ques_lab <- load_nhanes("mcq", 2003, lab = TRUE) %>% setDT
 
-# example:  load many files
-listing <- c("mcq", "dex", "hcq", "hiq", "vix", "uc") # demo is assumed
-full <- load_merge(listing, 2003) # open all datasets and merge together by SEQN
-full_labs <- load_labs_merge(listing, 2003) # open all label datasets and stack them (SEQN repeated for each dataset)
+## example:  load many files
+# listing <- c("mcq", "dex", "hcq", "hiq", "vix", "uc") # demo is assumed
+# full <- load_merge(listing, 2003) # open all datasets and merge together by SEQN
+# full_labs <- load_labs_merge(listing, 2003) # open all label datasets and stack them (SEQN repeated for each dataset)
 
