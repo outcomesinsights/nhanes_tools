@@ -10,14 +10,14 @@ load_nhanes <- function(f = "", yr, d = "./data/raw/nhanes", lab = FALSE){
     l <- letters[(yr - 1999) / 2 + 1]
     yr_yr <- paste(yr, yr + 1, sep = "_")
     if(lab == FALSE) {
-        f <- paste0(d, "_", yr_yr, "/", f, "_", l, ".rds")
+        f1 <- paste0(d, "_", yr_yr, "/", f, "_", l, ".rds")
         f2 <- paste0(d, "_", yr_yr, "/", f, ".rds")
     } else {
-        f <- paste0(d, "_", yr_yr, "/", f, "_", l, "_label.rds")
+        f1 <- paste0(d, "_", yr_yr, "/", f, "_", l, "_label.rds")
         f2 <- paste0(d, "_", yr_yr, "/", f, "_label.rds")
     }
-    if(file.exists(f)) {
-        o <- readRDS(f) 
+    if(file.exists(f1)) {
+        o <- readRDS(f1) 
     } else if(file.exists(f2)){
         o <- readRDS(f2)
     } else {
