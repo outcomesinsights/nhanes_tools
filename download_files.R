@@ -22,17 +22,20 @@ setup_nhanes <- function(data_dir = "./data/raw/", yr = 2009){
 
 # function to return filenames from ftp directory and details of files for later update checking (not implemented yet)
 # uses output from setup_nhanes as input
-get_filenames <- function(setup) {
+# string is using grepl on filename
+get_filenames <- function(setup, select = ".xpt$", save_file_list = "TRUE") {
     f <- getURL(setup$url, ftp.use.epsv = FALSE, crlf = TRUE) %>%
     strsplit(., "\n") %>%
     unlist %>%
-    grep(".xpt$", ., ignore.case = TRUE, value = TRUE) %>%
+    grep(select, ., ignore.case = TRUE, value = TRUE) %>%
     strsplit("\\s+") %>%
     do.call(rbind, .) %>% 
     as.data.frame %>%
     .[, 5:9]
 names(f) <- c("size", "month", "day", "year", "filename")
-saveRDS(f, paste0(setup$target_dir, "download_specs.rds"))
+if(save_file_list){
+    saveRDS(f, paste0(setup$target_dir, "download_specs.rds"))
+}
 filenames <- f$filename %>% 
     paste0(setup$url, .)
 return(filenames)
@@ -61,18 +64,18 @@ read_save <- function(ftp_url, setup) {
     }
 }
 
-# Get entire NHANES directory and read into subdirectory as .rds objects
-# note:  seems to work better doing this one wave at a time (no loop)
-waves <- seq(1999, 2011, 2) # for looping.  2013-2014 is not available yet 
-for(wave in waves){
-    cat("Starting wave: ", wave, "\n")
-    n <- setup_nhanes(data_dir = "./data/raw/", yr = wave)
-    filenames <- get_filenames(n)
-    for(file in filenames){
-        read_save(file, n)
-        cat("Saved file: ", file, "\n")
-    }
-}
+# # Get entire NHANES directory and read into subdirectory as .rds objects
+# # note:  seems to work better doing this one wave at a time (no loop)
+# # waves <- seq(1999, 2011, 2) # for looping.  2013-2014 is not available yet 
+# for(wave in waves[1]){
+#     cat("Starting wave: ", wave, "\n")
+#     n <- setup_nhanes(data_dir = "./data/raw/", yr = wave)
+#     filenames <- get_filenames(n)
+#     for(file in filenames){
+#         read_save(file, n)
+#         cat("Saved file: ", file, "\n")
+#     }
+# }
 
 # other things that could be done
 # convert all variable names in data and label files to lower case? (option - after the fact)
