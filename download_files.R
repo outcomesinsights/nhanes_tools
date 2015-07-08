@@ -10,13 +10,14 @@ setup_nhanes <- function(data_dir = "./data/raw/", yr = 2009){
     if(!file.exists(data_dir)) stop("data_dir does not exist")
     if(yr < 1999) stop("first year must be 1999 or greater")
     if(yr %% 2 == 0) stop("first year must be odd")
-    url <- paste0("ftp://ftp.cdc.gov/pub/Health_Statistics/NCHS/nhanes/", yr, "-", yr + 1, "/") # ftp location of files to download
+    data_url <- paste0("ftp://ftp.cdc.gov/pub/Health_Statistics/NCHS/nhanes/", yr, "-", yr + 1, "/") # ftp location of data files to download
+    death_url <- paste0("ftp://ftp.cdc.gov/pub/Health_Statistics/NCHS/datalinkage/linked_mortality/") # ftp location of death files to download
     diryears <- paste(yr, yr + 1, sep = "_")
     target_dir <- paste0(data_dir, "nhanes_", diryears, "/") # name of subdirectory where downloaded data will be saved
     if(!file.exists(target_dir)) { # creates subdirectory if it doesn't exist
         dir.create(target_dir)
     }
-    output <- list(url = url, target_dir = target_dir, years = diryears)
+    output <- list(data_url = data_url, death_url = death_url, target_dir = target_dir, years = diryears)
     return(output) # returns needed data elements for later functions
 }
 
@@ -24,7 +25,7 @@ setup_nhanes <- function(data_dir = "./data/raw/", yr = 2009){
 # uses output from setup_nhanes as input
 # string is using grepl on filename
 get_filenames <- function(setup, select = ".xpt$", save_file_list = "TRUE") {
-    f <- getURL(setup$url, ftp.use.epsv = FALSE, crlf = TRUE) %>%
+    f <- getURL(setup$data_url, ftp.use.epsv = FALSE, crlf = TRUE) %>%
     strsplit(., "\n") %>%
     unlist %>%
     grep(select, ., ignore.case = TRUE, value = TRUE) %>%
@@ -37,14 +38,15 @@ if(save_file_list){
     saveRDS(f, paste0(setup$target_dir, "download_specs.rds"))
 }
 filenames <- f$filename %>% 
-    paste0(setup$url, .)
+    paste0(setup$data_url, .)
 return(filenames)
 }
 
 # function to take an ftp url, download to temp file, convert from SAS transport to R, and save data and labels as RDS files in destination directory
 read_save <- function(ftp_url, setup) {
+    cat("Loading file: ", setup$years, basename(ftp_url), " . . . ") 
     temp <- tempfile()
-    download.file(ftp_url, temp, mode = "wb", method = "curl") # "curl" MUCH faster than "auto"
+    download.file(ftp_url, temp, mode = "wb", method = "curl", quiet = TRUE) # "curl" MUCH faster than "auto"
     f <- read.xport(temp) # extracts data file(s)
     l <- lookup.xport(temp) # extracts format information list (may have more than 1 item)
     orig_name <- names(l) %>% 
@@ -62,6 +64,7 @@ read_save <- function(ftp_url, setup) {
     } else {
         lapply(1:length(finalname),   function(i) saveRDS(f[[i]], finalname[[i]])) # data a list of dataframes using RDS for each
     }
+    cat("Completed. File count: ", length(finalname), "\n")
 }
 
 # # Get entire NHANES directory and read into subdirectory as .rds objects
