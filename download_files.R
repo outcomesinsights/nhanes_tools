@@ -30,13 +30,19 @@ setup_nhanes <- function(data_dir = "./data/raw/", yr = 2009){
         getURL(dir_url, ftp.use.epsv = FALSE, crlf = TRUE) %>%
         strsplit(., "\n") %>%
         unlist %>%
-        grep(select, ., ignore.case = TRUE, value = TRUE) %>%
-        strsplit("\\s+") %>%
-        do.call(rbind, .) %>% 
-        as.data.frame %>%
-        .[, 5:9]
-    names(f) <- c("size", "month", "day", "year", "filename")
-    return(f)
+        grep(select, ., ignore.case = TRUE, value = TRUE)
+    if(length(f) == 0) {
+        f <- NULL
+        return(f)
+    } else {
+        f <- 
+            strsplit(f, "\\s+") %>%
+            do.call(rbind, .) %>% 
+            as.data.frame %>%
+            .[, 5:9]
+        names(f) <- c("size", "month", "day", "year", "filename")
+        return(f)
+    }
 }
 
 # function to get data files and death files
@@ -51,8 +57,12 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
         f_data$filename %>% 
         paste0(setup$data_url, .)
     filenames_death <- 
-        f_death$filename %>% 
-        paste0(setup$death_url, .)
+        if(length(f_death) == 0) {
+            NULL
+        } else {
+            f_death$filename %>% 
+            paste0(setup$death_url, .)
+        }
     filenames <- 
         c(filenames_data, filenames_death)
     return(filenames)
@@ -155,7 +165,7 @@ download_nhanes <- function(ftp_url, setup){
 # for(wave in waves[1:2]){
 #     cat("Starting wave: ", wave, "\n")
 #     n <- setup_nhanes(data_dir = "./data/raw/", yr = wave)
-#     filenames <- get_nhanes_files(n)
+#     filenames <- get_nhanes_filenames(n)
 #     for(file in filenames){
 #         download_nhanes(file, n)
 #     }
