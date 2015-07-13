@@ -18,13 +18,13 @@
 	MORTSRCE_DC		53
 	MORTSRCE_DCL	54
 	
+	SEQN			=	'NHANES Respondent Sequence Number'
 	ELIGSTAT		=	'Eligibility Status for Mortality Follow-up'
 	MORTSTAT		=	'Final Mortality Status'
 	CAUSEAVL		=	'Cause of Death Data Available'
 	UCOD_LEADING	=	'Underlying Cause of Death Recode from UCOD_113 Leading Causes'
 	DIABETES		=	'Diabetes flag from multiple cause of death'
 	HYPERTEN		=	'Hypertension flag from multiple cause of death'
-	SEQN			=	'NHANES Respondent Sequence Number'
 	PERMTH_INT		=	'Person Months of Follow-up from Interview Date'
 	PERMTH_EXM		=	'Person Months of Follow-up from MEC/Exam Date'
 
