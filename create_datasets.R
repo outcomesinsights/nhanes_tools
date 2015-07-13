@@ -25,15 +25,19 @@ load_nhanes <- function(f = "", yr, d = "./data/raw/nhanes", lab = FALSE){
         stop("no file can be found - check name and start year")
     }
     setDT(o)
-    return(o)
+    if(lab == TRUE) {
+        return(o[, .(name, label)])
+    } else {
+        return(o)
+    }
 }
 
 # takes vector of file names, pull them and merges them all by SEQN.  
 # automatically loads demo, so no need to include this
-load_merge <- function(list_of_files, yr){
+load_merge <- function(vec_of_files, yr){
     dt <- load_nhanes("demo", yr)
     setkey(dt, SEQN)
-    for(f in list_of_files){
+    for(f in vec_of_files){
         y <- load_nhanes(f, yr)
         dt <- merge(dt, y, all.x = TRUE, by = "SEQN")
     }
@@ -41,9 +45,9 @@ load_merge <- function(list_of_files, yr){
 }
 
 # creates a data dictionary based on labels files (eventually merge into above function using classes?)
-load_labs_merge <- function(list_of_files, yr){
-    list_of_files <- c("demo", list_of_files)
-    dt <- lapply(list_of_files, load_nhanes, yr = yr, lab = TRUE)
+load_labs_merge <- function(vec_of_files, yr){
+    vec_of_files <- c("demo", vec_of_files)
+    dt <- lapply(vec_of_files, load_nhanes, yr = yr, lab = TRUE)
     dt1 <- rbindlist(dt) %>% 
         .[, .(name, label)] %>% 
         setkey(., name) %>% 
