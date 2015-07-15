@@ -22,7 +22,7 @@ load_nhanes <- function(f = "", yr, d = "./data/raw/nhanes", lab = FALSE){
     } else if(file.exists(f2)) {
         o <- readRDS(f2)
     } else {
-        stop("no file can be found - check name and start year")
+        stop(paste0("can't find file called ", f, " - check name and start year to make sure it exists"))
     }
     setDT(o)
     if(lab == TRUE) {

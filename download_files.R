@@ -69,8 +69,11 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
 }
 
 # function to take an ftp url, download to temp file, convert from SAS transport to R, and save data and labels as RDS files in destination directory
-.read_save_xpt <- function(ftp_url, setup) {
-    cat("Loading file: ", setup$years, basename(ftp_url), " . . . ") 
+# set console to FALSE if running parallel
+.read_save_xpt <- function(ftp_url, setup, console = TRUE) {
+    if(console) {
+        cat("Loading file: ", setup$years, basename(ftp_url), " . . . ") 
+    }
     temp <- tempfile()
     download.file(ftp_url, temp, mode = "wb", method = "curl", quiet = TRUE) # "curl" MUCH faster than "auto"
     f <- read.xport(temp) # extracts data file(s)
@@ -91,12 +94,20 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
     } else {
         lapply(1:length(finalname),   function(i) saveRDS(f[[i]], finalname[[i]])) # data a list of dataframes using RDS for each
     }
-    cat("Completed. File count: ", length(finalname), "\n")
+    if(console) {
+        cat("Completed. File count: ", length(finalname), "\n")
+    } else {
+        r <- paste0("Completed:  ", basename(ftp_url), " File count:  ", length(finalname))
+        return(r)
+    }
 }
 
 # function to download associated death file for specific NHANES year
-.read_save_fwf <- function(ftp_url, setup){
-    cat("Loading death file: ", setup$years, basename(ftp_url), " . . . ") 
+# set console to false if running parallel
+.read_save_fwf <- function(ftp_url, setup, console = TRUE){
+    if(console){
+        cat("Loading death file: ", setup$years, basename(ftp_url), " . . . ") 
+    }
     s <- .create_death_specs()
     temp <- tempfile()
     download.file(ftp_url, temp, method = "curl", quiet = TRUE)
@@ -105,7 +116,12 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
     filename_labs <- paste0(setup$target_dir, "death_label.rds")
     saveRDS(dat, filename_data)
     saveRDS(s$labs, filename_labs)
-    cat("Completed loading.\n")
+    if(console) {
+        cat("Completed loading.\n")
+    } else {
+        r <- paste0("Completed:  ", basename(filename_data))
+        return(r)
+    }
 }
 
 # function to decide which read function to use
