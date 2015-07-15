@@ -75,7 +75,7 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
         cat("Loading file: ", setup$years, basename(ftp_url), " . . . ") 
     }
     temp <- tempfile()
-    download.file(ftp_url, temp, mode = "wb", method = "curl", quiet = TRUE) # "curl" MUCH faster than "auto"
+    .try_download(ftp_url, temp, mode = "wb", method = "curl", quiet = TRUE) # "curl" MUCH faster than "auto"
     f <- read.xport(temp) # extracts data file(s)
     l <- lookup.xport(temp) # extracts format information list (may have more than 1 item)
     orig_name <- 
@@ -110,7 +110,7 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
     }
     s <- .create_death_specs()
     temp <- tempfile()
-    download.file(ftp_url, temp, method = "curl", quiet = TRUE)
+    .try_download(ftp_url, temp, method = "curl", quiet = TRUE)
     dat <- read_fwf(temp, fwf_positions(s$fwf$start, s$fwf$end, col_names = s$fwf$var), col_types = paste0(s$fwf$type, collapse = ""), na = ".")
     filename_data <- paste0(setup$target_dir, "death.rds")
     filename_labs <- paste0(setup$target_dir, "death_label.rds")
@@ -124,14 +124,47 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
     }
 }
 
+# handles errors and warnings in the download process
+.try_download <- function(link, dest, times = 5, warn_msg = NULL, err_msg = NULL, fin_msg = NULL, ...){
+    check <- 1
+    while(check <= times & check > 0) {
+        check <- check + 
+            tryCatch(
+            {
+                download.file(link, dest, ...)
+                return(-check)
+            },
+            warning = function(cond) {
+                if(!is.null(warn_msg)){
+                    message(warn_msg)
+                    message(cond)
+                    message("\nAttempt = ", check)
+                }
+                return(1)
+            },
+            error = function(cond) {
+                if(!is.null(err_msg)){
+                    message(err_msg)
+                    message(cond)
+                    message("\nAttempt = ", check)
+                }
+                return(1)
+            },
+            finally = {
+                message(fin_msg)
+            })
+    }
+    invisible(check - 1)
+}
+
 # function to decide which read function to use
-download_nhanes <- function(ftp_url, setup){
+download_nhanes <- function(ftp_url, setup, ...){
     if(grepl(".xpt$", ftp_url, ignore.case = TRUE)){
-        .read_save_xpt(ftp_url, setup)
+        .read_save_xpt(ftp_url, setup, ...)
     } else if(grepl(".dat$", ftp_url, ignore.case = TRUE)){
-        .read_save_fwf(ftp_url, setup)
+        .read_save_fwf(ftp_url, setup, ...)
     } else {
-        stop("file does not end in .xpt or .dat")
+        stop("file to be downloaded does not end in .xpt or .dat")
     }
 }
 
