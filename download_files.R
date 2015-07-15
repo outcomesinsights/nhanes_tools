@@ -97,7 +97,7 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
     if(console) {
         cat("Completed. File count: ", length(finalname), "\n")
     } else {
-        r <- paste0("Completed:  ", basename(ftp_url), " File count:  ", length(finalname))
+        r <- paste0("Completed:  ", basename(ftp_url), " . . . File count:  ", length(finalname))
         return(r)
     }
 }
@@ -125,7 +125,7 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
 }
 
 # handles errors and warnings in the download process
-.try_download <- function(link, dest, times = 5, warn_msg = NULL, err_msg = NULL, fin_msg = NULL, ...){
+.try_download <- function(link, dest, times = 5, warn_msg = "warning!", err_msg = "error!", fin_msg = NULL, ...){
     check <- 1
     while(check <= times & check > 0) {
         check <- check + 
@@ -211,7 +211,7 @@ download_nhanes <- function(ftp_url, setup, ...){
 # Get entire NHANES directory and read into subdirectory as .rds objects
 # note:  seems to work better doing this one wave at a time (no loop)
 # waves <- seq(1999, 2011, 2) # for looping.  2013-2014 is not available yet 
-# for(wave in waves[1:2]){
+# for(wave in waves[1:7]){
 #     cat("Starting wave: ", wave, "\n")
 #     n <- setup_nhanes(data_dir = "./data/raw/", yr = wave)
 #     filenames <- get_nhanes_filenames(n)
@@ -219,6 +219,15 @@ download_nhanes <- function(ftp_url, setup, ...){
 #         download_nhanes(file, n)
 #     }
 #     cat("Finished wave: ", wave, "\n")
+# }
+
+# download loop in parallel.  Not quite twice as fast (on my computer)
+# library(foreach)
+# library(doMC)
+# 
+# registerDoMC(cores = 4)
+# foreach(file = filenames, .packages = c("foreign"), .combine = rbind) %dopar% {
+#     download_nhanes(file, n, console = FALSE)
 # }
 
 # other things that could be done
