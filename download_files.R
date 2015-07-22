@@ -125,7 +125,9 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
 }
 
 # handles errors and warnings in the download process
-.try_download <- function(link, dest, times = 5, warn_msg = "warning!", err_msg = "error!", fin_msg = NULL, ...){
+# source:  http://stackoverflow.com/questions/12193779/how-to-write-trycatch-in-r
+# ... used to pass options to download.file
+.try_download <- function(link, dest, times = 5, warn_msg = "There was a warning!", err_msg = "There was an error!", fin_msg = NULL, ...){
     check <- 1
     while(check <= times & check > 0) {
         check <- check + 
@@ -208,9 +210,10 @@ download_nhanes <- function(ftp_url, setup, ...){
     )
 }
 
+# EXAMPLES:
 # Get entire NHANES directory and read into subdirectory as .rds objects
-# note:  seems to work better doing this one wave at a time (no loop)
-# waves <- seq(1999, 2011, 2) # for looping.  2013-2014 is not available yet 
+# Note:  may work better doing this one or two waves at a time
+# waves <- seq(1999, 2011, 2)
 # for(wave in waves[1:7]){
 #     cat("Starting wave: ", wave, "\n")
 #     n <- setup_nhanes(data_dir = "./data/raw/", yr = wave)
@@ -221,15 +224,17 @@ download_nhanes <- function(ftp_url, setup, ...){
 #     cat("Finished wave: ", wave, "\n")
 # }
 
-# download loop in parallel.  Not quite twice as fast (on my computer)
+# This version downloads files in parallel.  Not quite twice as fast (on my computer)
+# Returns a list of completed files at the end.  Set console = FALSE in above functions
 # library(foreach)
-# library(doMC)
+# library(doMC) # use library(doSNOW) on Windows
 # 
-# registerDoMC(cores = 4)
+# registerDoMC(cores = 4) # set number of cores for your computer here
 # foreach(file = filenames, .packages = c("foreign"), .combine = rbind) %dopar% {
 #     download_nhanes(file, n, console = FALSE)
 # }
 
+# TO DO
 # other things that could be done
 # convert all variable names in data and label files to lower case? (option - after the fact)
 # put data and labels in separate subdirectories? (option - after the fact)
