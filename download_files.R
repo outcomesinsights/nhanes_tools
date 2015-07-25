@@ -1,23 +1,22 @@
 library(foreign)
 library(RCurl)
+library(downloader)
 library(magrittr)
 library(readr)
 options(stringsAsFactors = FALSE)
 
 # function to set up directories for downloading
-# data_dir is directory on computer in which subdirectories will be made for all nhanes files (must end in "/")
+# data_dir is directory on computer in which subdirectories will be made for all nhanes files (can end in "/" on Mac but CANNOT on Windows)
 # yr is the first year of the nhanes wave of interest (always odd)
-setup_nhanes <- function(data_dir = "./data/raw/", yr = 2009){
-    if(!file.exists(data_dir)) stop("data_dir does not exist")
-    if(yr < 1999) stop("first year must be 1999 or greater")
-    if(yr %% 2 == 0) stop("first year must be odd")
+setup_nhanes <- function(data_dir = "./data/", yr = 2009){
+    if(!file.exists(data_dir)) stop("The data_dir you provided does not exist or the syntax is wrong.  On Unix/Mac you can use a slash at the end, but on Windows you cannot use the slash.")
+    data_dir <- normalizePath(path.expand(data_dir), winslash = "/")
+    if(!yr %in% seq(1999, 2011, 2)) stop("first year must be an odd number from 1999 to 2011")
     data_url <- paste0("ftp://ftp.cdc.gov/pub/Health_Statistics/NCHS/nhanes/", yr, "-", yr + 1, "/") # ftp location of data files to download
     death_url <- paste0("ftp://ftp.cdc.gov/pub/Health_Statistics/NCHS/datalinkage/linked_mortality/") # ftp location of death files to download
     diryears <- paste(yr, yr + 1, sep = "_")
-    target_dir <- paste0(data_dir, "nhanes_", diryears, "/") # name of subdirectory where downloaded data will be saved
-    if(!file.exists(target_dir)) { # creates subdirectory if it doesn't exist
-        dir.create(target_dir)
-    }
+    target_dir <- paste0(data_dir, "/nhanes_", diryears, "/") # name of subdirectory where downloaded data will be saved
+    dir.create(target_dir, showWarnings = FALSE) # suppress warning if directory already exists
     output <- list(data_url = data_url, death_url = death_url, target_dir = target_dir, years = diryears)
     return(output) # returns needed data elements for later functions
 }
@@ -25,10 +24,11 @@ setup_nhanes <- function(data_dir = "./data/raw/", yr = 2009){
 # function to return filenames from ftp directory and details of files for later update checking (not implemented yet)
 # uses output from setup_nhanes as input
 # string is using grepl on filename
+# getURL syntax from RCurl package example
 .get_filenames <- function(dir_url, select = "") {
     f <- 
         getURL(dir_url, ftp.use.epsv = FALSE, crlf = TRUE) %>%
-        strsplit(., "\n") %>%
+        strsplit(., "\r*\n") %>%
         unlist %>%
         grep(select, ., ignore.case = TRUE, value = TRUE)
     if(length(f) == 0) {
@@ -72,10 +72,10 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
 # set console to FALSE if running parallel
 .read_save_xpt <- function(ftp_url, setup, console = TRUE) {
     if(console) {
-        cat("Loading file: ", setup$years, basename(ftp_url), " . . . ") 
+        message("Loading wave = ", setup$years, ", file = ", basename(ftp_url), appendLF = FALSE) 
     }
     temp <- tempfile()
-    .try_download(ftp_url, temp, mode = "wb", method = "curl", quiet = TRUE) # "curl" MUCH faster than "auto"
+    .try_download(ftp_url, temp, mode = "wb", quiet = TRUE) # "curl" MUCH faster than "auto"
     f <- read.xport(temp) # extracts data file(s)
     l <- lookup.xport(temp) # extracts format information list (may have more than 1 item)
     orig_name <- 
@@ -95,9 +95,9 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
         lapply(1:length(finalname),   function(i) saveRDS(f[[i]], finalname[[i]])) # data a list of dataframes using RDS for each
     }
     if(console) {
-        cat("Completed. File count: ", length(finalname), "\n")
+        message("Completed. File count: ", length(finalname))
     } else {
-        r <- paste0("Completed:  ", basename(ftp_url), " . . . File count:  ", length(finalname))
+        r <- paste0("Completed:  ", basename(ftp_url), "File count:  ", length(finalname))
         return(r)
     }
 }
@@ -106,18 +106,18 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
 # set console to false if running parallel
 .read_save_fwf <- function(ftp_url, setup, console = TRUE){
     if(console){
-        cat("Loading death file: ", setup$years, basename(ftp_url), " . . . ") 
+        message("Loading wave = ", setup$years, ", death file = ", basename(ftp_url), appendLF = FALSE) 
     }
     s <- .create_death_specs()
     temp <- tempfile()
-    .try_download(ftp_url, temp, method = "curl", quiet = TRUE)
+    .try_download(ftp_url, temp, quiet = TRUE)
     dat <- read_fwf(temp, fwf_positions(s$fwf$start, s$fwf$end, col_names = s$fwf$var), col_types = paste0(s$fwf$type, collapse = ""), na = ".")
     filename_data <- paste0(setup$target_dir, "death.rds")
     filename_labs <- paste0(setup$target_dir, "death_label.rds")
     saveRDS(dat, filename_data)
     saveRDS(s$labs, filename_labs)
     if(console) {
-        cat("Completed loading.\n")
+        message("Completed loading death file.\n")
     } else {
         r <- paste0("Completed:  ", basename(filename_data))
         return(r)
@@ -133,7 +133,7 @@ get_nhanes_filenames <- function(setup, save_file_list = TRUE){
         check <- check + 
             tryCatch(
             {
-                download.file(link, dest, ...)
+                download(link, dest, ...)
                 return(-check)
             },
             warning = function(cond) {
@@ -230,7 +230,7 @@ download_nhanes <- function(ftp_url, setup, ...){
 # library(doMC) # use library(doSNOW) on Windows
 # 
 # registerDoMC(cores = 4) # set number of cores for your computer here
-# foreach(file = filenames, .packages = c("foreign"), .combine = rbind) %dopar% {
+# foreach(file = filenames, .packages = c("foreign", "downloader"), .combine = rbind) %dopar% {
 #     download_nhanes(file, n, console = FALSE)
 # }
 
